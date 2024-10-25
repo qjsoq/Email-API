@@ -1,0 +1,44 @@
+@startuml
+'autonumbering for sequence steps
+autonumber
+
+actor Client as C
+participant "Validation Service" as ES
+participant "Email Service" as VS
+participant "SMTP Server" as SMTP
+participant "Mail Repository" as MR
+participant "Notification Service" as NS
+
+'C натискає кнопку відправки
+C -> ES: Натискання кнопки "Відправити"
+
+'Перевірка даних
+alt Дані коректні
+    ES -> VS: Передає email та вміст
+
+    'Email Service передає повідомлення через SMTP сервер
+    VS -> SMTP: Передає email відповідному серверу
+
+    'SMTP сервер надсилає повідомлення до сервера отримувача
+
+    'Перевірка результату відправлення
+    alt Повідомлення успішно передано
+        'Email Service оновлює статус у репозиторії
+        VS -> MR: Збереження повідомлення в репозиторії
+
+        'Email Service повідомляє клієнту про успішну відправку
+        VS -> NS: Сповістити користувача
+        NS -> C: Лист успішно відправлено
+    else Відправлення неуспішне
+        'SMTP повідомляє про помилку
+        SMTP -> VS: Сповіщення про помилку
+
+        'Email Service інформує клієнта про помилку через Notification Service
+        VS -> NS: Сповіщення про помилку відправлення
+        NS -> C: Повідомлення про помилку (невдалося надіслати лист)
+    end
+else Дані некоректні
+    ES -> NS: Сповістити користувача про некоректні дані
+    NS -> C: Повідомлення про помилку (некоректний email або вміст)
+end
+@enduml

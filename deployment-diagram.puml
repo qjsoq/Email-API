@@ -1,0 +1,17 @@
+@startuml
+title Deployment Diagram for Email Client Application
+
+node "ClientPC:WindowsPC" as client {
+    [<<execution environment>> EmailClientApp]
+}
+
+node "ServerMachine:WindowsPC" as server {
+    [<<execution environment>> EmailBusinessLogicServer]
+    [Database]
+}
+
+client <-- server : recieve Email
+server --> client : send Email
+[<<execution environment>> EmailBusinessLogicServer] --> [Database] : executes queries
+
+@enduml

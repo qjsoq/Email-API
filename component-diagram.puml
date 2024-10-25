@@ -1,0 +1,27 @@
+@startuml
+title Component Diagram for Email Client Application (Microservices Architecture)
+
+package "Client" {
+    [EmailClientApp]
+}
+
+package "MicroServices" {
+    [EmailClientApp] --> [API Gateway] : sends requests via HTTPS
+    [API Gateway] --> [Validation Service] : forwards validation request
+    [API Gateway] --> [Email Service] : forwards email sending request
+    [API Gateway] --> [User Service] : forwards user-related request
+    [Email Service] --> [Notification Service] : inform client about email status
+    [Validation Service] --> [Notification Service] : inform client about validation fail
+}
+
+[Email Service] --> [3rd Party Email Server] : sends email to server
+[Email Service] --> [3rd Party Email Server] : recieves email from server
+
+
+package "Data Storage" {
+    [Database]
+}
+
+[Email Service] --> [Database] : stores/retrieves email
+[User Service] --> [Database] : stores/retrieves user data
+@enduml
