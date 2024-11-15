@@ -1,18 +1,15 @@
 package com.example.emailapp.domain;
 
-import java.security.Timestamp;
+import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class Email {
-    private int emailId;
-    private int accountId;
-    private int folderId;
-    private int categoryId;
     private String subject;
     private String sender;
     private String recipient;
     private String body;
-    private Timestamp sentAt;
-    private boolean isRead;
-
-    // Getters and Setters
+    private LocalDateTime sentAt;
 }

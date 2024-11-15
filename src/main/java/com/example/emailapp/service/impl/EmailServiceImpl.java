@@ -1,95 +1,60 @@
 package com.example.emailapp.service.impl;
 
-import static com.example.emailapp.utils.EmailUtils.*;
-
+import com.example.emailapp.domain.Email;
+import com.example.emailapp.repository.MailBoxRepository;
 import com.example.emailapp.service.EmailService;
-import jakarta.mail.internet.MimeMessage;
+import com.sun.mail.smtp.SMTPTransport;
+import com.sun.mail.util.BASE64EncoderStream;
+import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.util.Properties;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-
-import java.io.File;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
-    public static final String UTF_8 = "UTF-8";
-    public static final String EMAIL_TEMPLATE = "emailTemplate";
-    private final JavaMailSender mailSender;
-    private final TemplateEngine templateEngine;
-    @Value("${spring.mail.verify.host}")
-    private String host;
-    @Value("${spring.mail.username}")
-    private String fromMail;
-    @Override
-    @Async
-    public void sendSimpleMailMessage(String name, String to, String token) {
-        System.out.println(host + mailSender);
-        try{
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setSubject("test email");
-            message.setFrom(fromMail);
-            message.setTo(to);
-            message.setText(getEmailMessage(name, host, token));
-            mailSender.send(message);
-        }catch (Exception ex){
-            System.out.println(ex.getMessage());
-            throw new RuntimeException(ex.getMessage());
-        }
-    }
+    private final MailBoxRepository mailBoxRepository;
 
     @Override
-    @Async
-    public void sendMimeMessageWithAttachment(String name, String to, String token) {
-        try{
-            var message = getMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF_8);
-            helper.setPriority(1);
-            helper.setSubject("New user account verification");
-            helper.setFrom(fromMail);
-            helper.setTo(to);
-            helper.setText(getEmailMessage(name, host, token));
-            FileSystemResource stylejpg = new FileSystemResource(new File("D:/Downloads" +
-                    "/image.jpg"));
-            helper.addInline(getContentId(stylejpg.getFilename()), stylejpg);
-            mailSender.send(message);
-        }catch (Exception ex){
-            System.out.println(ex.getMessage());
-            throw new RuntimeException(ex.getMessage());
+    public Email sendEmail(Email email) throws MessagingException, UnsupportedEncodingException {
+        var mailBox = mailBoxRepository.findByEmailAddress(email.getSender())
+                .orElseThrow(RuntimeException::new);
+        var configs = mailBox.getEmailConfiguration();
+        Properties props = System.getProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.port", configs.getPort());
+        props.put("mail.smtp.starttls.enable", configs.isUseTls());
+        System.out.println(configs.getPort());
+        Session session = Session.getDefaultInstance(props);
+        session.setDebug(true);
+        System.out.println(email.getSender());
+        System.out.println(email.getBody());
+        MimeMessage msg = new MimeMessage(session);
+        msg.setFrom(new InternetAddress(email.getSender(), mailBox.getUser().getLogin()));
+        msg.setRecipient(Message.RecipientType.TO, new InternetAddress(email.getRecipient()));
+        msg.setSubject(email.getSubject());
+        msg.setContent(email.getBody(), "text/html");
+
+        try (SMTPTransport transport = new SMTPTransport(session, null)) {
+            transport.connect(configs.getHost(), email.getSender(), null);
+            transport.issueCommand(
+                    "AUTH XOAUTH2 " + new String(BASE64EncoderStream.encode(
+                            String.format("user=%s\1auth=Bearer %s\1\1",
+                                    email.getSender(),
+                                    mailBox.getAccessSmtp()).getBytes())),
+                    235);
+            transport.sendMessage(msg, msg.getAllRecipients());
+        } catch (MessagingException exception) {
+            throw exception;
         }
+        email.setSentAt(LocalDateTime.now());
+        return email;
     }
 
-    @Override
-    public void sendHtmlEmail(String name, String to, String token) {
-        try{
-            Context context = new Context();
-            context.setVariables(Map.of("name", name,"url", getVerificationURL(host, token)));
-            String text = templateEngine.process(EMAIL_TEMPLATE, context);
-            var message = getMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF_8);
-            helper.setPriority(1);
-            helper.setSubject("Test email");
-            helper.setFrom(fromMail);
-            helper.setTo(to);
-            helper.setText(text, true);
-            mailSender.send(message);
-        }catch (Exception ex){
-            System.out.println(ex.getMessage());
-            throw new RuntimeException(ex.getMessage());
-        }
-    }
-    private MimeMessage getMimeMessage() {
-        return mailSender.createMimeMessage();
-    }
-    private String getContentId(String file) {
-        return "<" + file + ">";
-    }
 }
