@@ -1,8 +1,9 @@
 package com.example.emailapp.service;
 
-public interface EmailService {
-    public void sendSimpleMailMessage(String name, String to, String token);
-    public void sendMimeMessageWithAttachment(String name, String to, String token);
-    public void sendHtmlEmail(String name, String to, String token);
+import com.example.emailapp.domain.Email;
+import java.io.UnsupportedEncodingException;
+import javax.mail.MessagingException;
 
+public interface EmailService {
+    Email sendEmail(Email email) throws MessagingException, UnsupportedEncodingException;
 }
