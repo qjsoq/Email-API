@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final UserService userService;
     private final UserMapper userMapper;
+
     @PostMapping
-    public ResponseEntity<HttpResponse> createUser(@RequestBody UserCreationDto userCreationDto){
+    public ResponseEntity<HttpResponse> createUser(@RequestBody UserCreationDto userCreationDto) {
         User newUser = userService.saveUser(userMapper.toUser(userCreationDto));
-        System.out.println(newUser);
         return ResponseEntity.created(URI.create("")).body(
                 HttpResponse.builder()
                         .code(201)
