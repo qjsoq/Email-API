@@ -8,8 +8,8 @@ import lombok.Setter;
 @Setter
 public class Email {
     private String subject;
-    private String sender;
-    private String recipient;
+    private String senderEmail;
+    private String recipientEmail;
     private String body;
     private LocalDateTime sentAt;
 }
