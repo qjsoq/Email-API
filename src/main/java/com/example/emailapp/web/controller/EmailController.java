@@ -4,8 +4,10 @@ import com.example.emailapp.domain.HttpResponse;
 import com.example.emailapp.service.EmailService;
 import com.example.emailapp.web.dto.email.EmailCreationDto;
 import com.example.emailapp.web.mapper.EmailMapper;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import javax.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +25,11 @@ public class EmailController {
 
     @PostMapping
     public ResponseEntity<HttpResponse> sendEmail(@RequestBody EmailCreationDto emailCreationDto)
-            throws Exception {
+            throws MessagingException, UnsupportedEncodingException {
         var email = emailService.sendEmail(emailMapper.toEmail(emailCreationDto));
-        return ResponseEntity.ok(HttpResponse.builder().httpStatus(HttpStatus.OK)
+        return ResponseEntity.ok(HttpResponse.builder()
+                .httpStatus(HttpStatus.OK)
                 .code(200)
-                .message("Email successfully sent")
                 .data(Map.of("email", emailMapper.toDto(email)))
                 .path("/api/v1/emails")
                 .timeStamp(LocalDateTime.now().toString())
