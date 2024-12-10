@@ -12,29 +12,26 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service("ukr")
-@RequiredArgsConstructor
 public class UkrNetSendStrategy implements SendStrategy {
     private final MailBoxRepository mailBoxRepository;
+
+    private final Properties props;
+
+    public UkrNetSendStrategy(MailBoxRepository mailBoxRepository, @Qualifier("ukr-properties") Properties props) {
+        this.mailBoxRepository = mailBoxRepository;
+        this.props = props;
+    }
 
     @Override
     public Email sendWithStrategyEmail(Email email)
             throws MessagingException, UnsupportedEncodingException {
         var mailBox = mailBoxRepository.findByEmailAddress(email.getSenderEmail())
                 .orElseThrow(RuntimeException::new);
-        var configs = mailBox.getEmailConfiguration();
 
-        Properties props = new Properties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.host", configs.getHost());
-        props.put("mail.smtp.port", configs.getPort());
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.socketFactory.port", configs.getPort());
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.socketFactory.fallback", "false");
 
         Session session = Session.getInstance(props, new javax.mail.Authenticator() {
             @Override

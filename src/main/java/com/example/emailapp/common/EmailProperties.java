@@ -8,21 +8,27 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class EmailProperties {
     @Bean(name = "ukr-properties")
-    public Properties getUkrNetSession() {
+    public Properties getUkrNetProperties() {
         var ukrNetConfig = EmailConfiguration.UKRNET;
-        var properties = getDefualtProperties(ukrNetConfig.getPort(), ukrNetConfig.isUseTls());
-        properties.put("mail.smtp.host", ukrNetConfig.getHost());
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.socketFactory.port", ukrNetConfig.getPort());
-        properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        properties.put("mail.smtp.socketFactory.fallback", "false");
-        return properties;
+        Properties props = new Properties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.host", ukrNetConfig.getHost());
+        props.put("mail.smtp.port", ukrNetConfig.getPort());
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.socketFactory.port", ukrNetConfig.getPort());
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.fallback", "false");
+        return props;
     }
-    private Properties getDefualtProperties(int port, boolean isUseTls) {
+
+    @Bean(name = "gmail-properties")
+    public Properties GetGmailProperties() {
+        var gmailConfig = EmailConfiguration.GMAIL;
         Properties props = System.getProperties();
         props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.port", port);
-        props.put("mail.smtp.starttls.enable", isUseTls);
+        props.put("mail.smtp.port", gmailConfig.getPort());
+        props.put("mail.smtp.auth", "false");
+        props.put("mail.smtp.starttls.enable", gmailConfig.isUseTls());
         return props;
     }
 }

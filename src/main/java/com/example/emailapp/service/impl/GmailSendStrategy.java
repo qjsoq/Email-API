@@ -14,23 +14,25 @@ import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service("gmail")
-@RequiredArgsConstructor
 public class GmailSendStrategy implements SendStrategy {
     private final MailBoxRepository mailBoxRepository;
+    private final Properties props;
+
+    public GmailSendStrategy(MailBoxRepository mailBoxRepository, @Qualifier("gmail-properties") Properties props) {
+        this.mailBoxRepository = mailBoxRepository;
+        this.props = props;
+    }
+
     @Override
     public Email sendWithStrategyEmail(Email email) throws MessagingException, UnsupportedEncodingException {
         var mailBox = mailBoxRepository.findByEmailAddress(email.getSenderEmail())
                 .orElseThrow(RuntimeException::new);
         var configs = mailBox.getEmailConfiguration();
-        Properties props = System.getProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.port", configs.getPort());
-        props.put("mail.smtp.auth", "false");
-        props.put("mail.smtp.starttls.enable", configs.isUseTls());
+
 
         Session session = Session.getInstance(props);
         session.setDebug(true);
