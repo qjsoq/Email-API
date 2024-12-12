@@ -25,7 +25,7 @@ public class SmtpController {
 
     @PostMapping
     public ResponseEntity<HttpResponse> sendEmail(@RequestBody EmailCreationDto emailCreationDto)
-            throws MessagingException, UnsupportedEncodingException {
+            throws UnsupportedEncodingException, MessagingException {
         var email = emailService.sendEmail(emailMapper.toEmail(emailCreationDto));
         return ResponseEntity.ok(HttpResponse.builder()
                 .httpStatus(HttpStatus.OK)
