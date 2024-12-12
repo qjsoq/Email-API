@@ -63,7 +63,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String getEmailDomain(String emailAddress) {
-        System.out.println(emailAddress);
         Pattern pattern = Pattern.compile("(?<=@)[^.]+(?=\\.)");
         Matcher matcher = pattern.matcher(emailAddress);
         if (matcher.find()) {
