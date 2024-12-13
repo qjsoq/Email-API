@@ -25,7 +25,10 @@ public class EmailProperties {
 
     @Bean(name = "ukr-imap-properties")
     public Properties getImapUkrNetProperties() {
-        return getDefaultProperties(ukrNetConfig);
+        Properties props = getDefaultProperties(ukrNetConfig);
+        props.put("mail.imap.ssl.enable", "true");
+        props.put("mail.imap.auth", "true");
+        return props;
     }
     @Bean(name = "gmail-imap-properties")
     public Properties getImapGmailProperties() {

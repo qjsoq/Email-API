@@ -105,4 +105,11 @@ public class ImapServiceImpl implements ImapService {
         closeStore(store);
         return messages;
     }
+
+    @Override
+    public Message getEmail(String account, String folderName, int msgnum) throws Exception {
+        Store store = getImapStore(account);
+        Folder folder = getFolderFromStore(store, folderName);
+        return folder.getMessage(msgnum);
+    }
 }

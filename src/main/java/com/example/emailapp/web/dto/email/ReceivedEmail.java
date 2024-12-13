@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 public class ReceivedEmail {
-    private String sender;
+    private int msgnum;
+    private String personal;
     private String subject;
     private Date receivedDate;
 
