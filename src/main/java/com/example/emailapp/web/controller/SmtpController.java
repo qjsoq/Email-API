@@ -17,15 +17,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/emails")
+@RequestMapping("/api/v1/send")
 @RequiredArgsConstructor
-public class EmailController {
+public class SmtpController {
     private final EmailService emailService;
     private final EmailMapper emailMapper;
 
     @PostMapping
     public ResponseEntity<HttpResponse> sendEmail(@RequestBody EmailCreationDto emailCreationDto)
-            throws MessagingException, UnsupportedEncodingException {
+            throws UnsupportedEncodingException, MessagingException {
         var email = emailService.sendEmail(emailMapper.toEmail(emailCreationDto));
         return ResponseEntity.ok(HttpResponse.builder()
                 .httpStatus(HttpStatus.OK)
