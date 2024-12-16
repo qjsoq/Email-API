@@ -35,5 +35,6 @@ public interface EmailMapper {
     @Mapping(source = "subject", target = "subject")
     @Mapping(source = "receivedDate", target = "receivedDate")
     @Mapping(target = "msgnum", expression = "java(message.getMessageNumber())")
+    @Mapping(target = "folder", expression = "java(message.getFolder().toString())")
     ReceivedEmail toReceivedEmail(Message message) throws MessagingException;
 }

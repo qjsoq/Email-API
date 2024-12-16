@@ -34,6 +34,70 @@ public class EmailServiceImpl implements EmailService {
     private final ImapService imapService;
     private SendStrategy sendStrategy;
 
+
+    @Override
+    public Email sendEmail(Email email) throws MessagingException, UnsupportedEncodingException {
+        specifyStrategy(email.getSenderEmail());
+
+        return sendStrategy.sendWithStrategyEmail(email);
+    }
+
+    @Override
+    public DetailedReceivedEmail getSpecificEmail(String account, String folderName, int msgnum)
+            throws Exception {
+        Message message = imapService.getEmail(account, folderName, msgnum);
+
+        Address[] fromAddresses = message.getFrom();
+        String senderEmail = null;
+        if (fromAddresses != null && fromAddresses.length > 0) {
+            InternetAddress address = (InternetAddress) fromAddresses[0];
+            senderEmail = address.getAddress();
+        }
+
+        Address[] recipientAddresses = message.getAllRecipients();
+        String receiverEmail = null;
+        if (recipientAddresses != null && recipientAddresses.length > 0) {
+            InternetAddress address = (InternetAddress) recipientAddresses[0];
+            receiverEmail = address.getAddress();
+        }
+
+        String subject = message.getSubject();
+
+        String body = getTextFromMessage(message);
+        return DetailedReceivedEmail.builder()
+                .body(body)
+                .receiverEmail(receiverEmail)
+                .senderEmail(senderEmail)
+                .subject(subject)
+                .receivedDate(message.getReceivedDate())
+                .build();
+    }
+
+
+    @Override
+    public boolean addEmailConfiguration(MailBox mailBox) {
+        String domainPart = getEmailDomain(mailBox.getEmailAddress());
+        Optional<EmailConfiguration> appropriateConfig =
+                Arrays.stream(EmailConfiguration.values())
+                        .filter(config -> config.getDomainName().equalsIgnoreCase(domainPart))
+                        .findFirst();
+        if (appropriateConfig.isPresent()) {
+            mailBox.setEmailConfiguration(appropriateConfig.get());
+            return true;
+        }
+        return false;
+    }
+
+    private String getEmailDomain(String emailAddress) {
+        Pattern pattern = Pattern.compile("(?<=@)[^.]+(?=\\.)");
+        Matcher matcher = pattern.matcher(emailAddress);
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            throw new IllegalArgumentException("Invalid email address format: " + emailAddress);
+        }
+    }
+
     private String getTextFromMessage(Message message) throws MessagingException, IOException {
         if (message.getContent() instanceof MimeMultipart mimeMultipart) {
             System.out.println("mime message");
@@ -58,46 +122,6 @@ public class EmailServiceImpl implements EmailService {
                         "No SendStrategy found for: " + strategyBeanName));
     }
 
-    @Override
-    public Email sendEmail(Email email) throws MessagingException, UnsupportedEncodingException {
-        specifyStrategy(email.getSenderEmail());
-
-        return sendStrategy.sendWithStrategyEmail(email);
-    }
-    @Override
-    public DetailedReceivedEmail getSpecificEmail(String account, String folderName, int msgnum)
-            throws Exception {
-        Message message = imapService.getEmail(account, folderName, msgnum);
-
-        // Extract sender's email address
-        Address[] fromAddresses = message.getFrom();
-        String senderEmail = null;
-        if (fromAddresses != null && fromAddresses.length > 0) {
-            InternetAddress address = (InternetAddress) fromAddresses[0];
-            senderEmail = address.getAddress();
-        }
-
-        Address[] recipientAddresses = message.getAllRecipients();
-        String receiverEmail = null;
-        if (recipientAddresses != null && recipientAddresses.length > 0) {
-            InternetAddress address = (InternetAddress) recipientAddresses[0];
-            receiverEmail = address.getAddress();
-        }
-
-        String subject = message.getSubject();
-
-        String body = getTextFromMessage(message);
-
-        return DetailedReceivedEmail.builder()
-                .body(body)
-                .receiverEmail(receiverEmail)
-                .senderEmail(senderEmail)
-                .subject(subject)
-                .receivedDate(message.getReceivedDate())
-                .build();
-    }
-
-
     public String getTextFromMimeMultipart2(
             MimeMultipart mimeMultipart) throws MessagingException, IOException {
         String result = "";
@@ -118,29 +142,6 @@ public class EmailServiceImpl implements EmailService {
             }
         }
         return result;
-    }
-    @Override
-    public boolean addEmailConfiguration(MailBox mailBox) {
-        String domainPart = getEmailDomain(mailBox.getEmailAddress());
-        Optional<EmailConfiguration> appropriateConfig =
-                Arrays.stream(EmailConfiguration.values())
-                        .filter(config -> config.getDomainName().equalsIgnoreCase(domainPart))
-                        .findFirst();
-        if (appropriateConfig.isPresent()) {
-            mailBox.setEmailConfiguration(appropriateConfig.get());
-            return true;
-        }
-        return false;
-    }
-
-    private String getEmailDomain(String emailAddress) {
-        Pattern pattern = Pattern.compile("(?<=@)[^.]+(?=\\.)");
-        Matcher matcher = pattern.matcher(emailAddress);
-        if (matcher.find()) {
-            return matcher.group();
-        } else {
-            throw new IllegalArgumentException("Invalid email address format: " + emailAddress);
-        }
     }
 
 }

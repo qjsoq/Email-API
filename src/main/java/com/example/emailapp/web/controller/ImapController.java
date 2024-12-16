@@ -29,7 +29,6 @@ public class ImapController {
                                                    @PathVariable String folderName)
             throws Exception {
         var messages = imapService.getEmails(account, folderName);
-        System.out.println(messages.length + "I am here");
         return ResponseEntity.ok(HttpResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .code(200)
